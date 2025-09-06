@@ -67,7 +67,10 @@ def delete_todo(todo_id):
     db.session.commit()
     return '', 204
 
+# Create database tables on app startup
+with app.app_context():
+    db.create_all()
+    print("Database tables created successfully!")
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
