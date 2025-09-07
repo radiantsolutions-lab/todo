@@ -112,6 +112,14 @@
             transform: rotate(180deg);
         }
 
+        .toggle-completed:hover {
+            transform: scale(1.05);
+        }
+
+        .toggle-completed:active {
+            transform: scale(0.95);
+        }
+
         .task-input {
             flex: 1;
             max-width: 400px;
@@ -355,9 +363,8 @@
 
         <div class="controls-section">
             <div id="taskCount" class="task-count">0 tasks</div>
-            <button id="toggleCompleted" class="toggle-completed">
+            <button id="toggleCompleted" class="toggle-completed" title="Show/Hide Completed Tasks">
                 <span class="toggle-icon">👁</span>
-                <span id="toggleText">Show Completed</span>
             </button>
         </div>
 
@@ -374,7 +381,6 @@
         const addBtn = document.getElementById('addBtn');
         const todoList = document.getElementById('todoList');
         const toggleCompleted = document.getElementById('toggleCompleted');
-        const toggleText = document.getElementById('toggleText');
         const taskCount = document.getElementById('taskCount');
 
         // State management
@@ -393,7 +399,7 @@
         // Toggle completed tasks
         toggleCompleted.addEventListener('click', () => {
             showCompleted = !showCompleted;
-            updateToggleButton();
+            toggleCompleted.classList.toggle('active');
             renderTodos(allTodos);
         });
 
@@ -408,15 +414,6 @@
             }
         }
 
-        function updateToggleButton() {
-            if (showCompleted) {
-                toggleCompleted.classList.add('active');
-                toggleText.textContent = 'Hide Completed';
-            } else {
-                toggleCompleted.classList.remove('active');
-                toggleText.textContent = 'Show Completed';
-            }
-        }
 
         function updateTaskCount() {
             const total = allTodos.length;
