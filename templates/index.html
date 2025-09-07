@@ -60,6 +60,58 @@
             justify-content: center;
         }
 
+        .controls-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding: 0 20px;
+        }
+
+        .task-count {
+            font-size: 0.875rem;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .toggle-completed {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 0.875rem;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .toggle-completed:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .toggle-completed.active {
+            background: #3b82f6;
+            color: #ffffff;
+        }
+
+        .toggle-completed.active:hover {
+            background: #2563eb;
+        }
+
+        .toggle-icon {
+            font-size: 1rem;
+            transition: transform 0.2s ease;
+        }
+
+        .toggle-completed.active .toggle-icon {
+            transform: rotate(180deg);
+        }
+
         .task-input {
             flex: 1;
             max-width: 400px;
@@ -301,6 +353,14 @@
             <button id="addBtn" class="add-btn">Add Task</button>
         </div>
 
+        <div class="controls-section">
+            <div id="taskCount" class="task-count">0 tasks</div>
+            <button id="toggleCompleted" class="toggle-completed">
+                <span class="toggle-icon">👁</span>
+                <span id="toggleText">Show Completed</span>
+            </button>
+        </div>
+
         <div class="tasks-section">
             <ul id="todoList" class="tasks-list">
                 <!-- Tasks will be loaded here -->
@@ -313,6 +373,13 @@
         const taskInput = document.getElementById('taskInput');
         const addBtn = document.getElementById('addBtn');
         const todoList = document.getElementById('todoList');
+        const toggleCompleted = document.getElementById('toggleCompleted');
+        const toggleText = document.getElementById('toggleText');
+        const taskCount = document.getElementById('taskCount');
+
+        // State management
+        let showCompleted = false;
+        let allTodos = [];
 
         // Load todos on page load
         document.addEventListener('DOMContentLoaded', loadTodos);
@@ -323,13 +390,45 @@
             if (e.key === 'Enter') addTask();
         });
 
+        // Toggle completed tasks
+        toggleCompleted.addEventListener('click', () => {
+            showCompleted = !showCompleted;
+            updateToggleButton();
+            renderTodos(allTodos);
+        });
+
         async function loadTodos() {
             try {
                 const response = await fetch(`${API_BASE}/todos`);
-                const todos = await response.json();
-                renderTodos(todos);
+                allTodos = await response.json();
+                updateTaskCount();
+                renderTodos(allTodos);
             } catch (error) {
                 console.error('Error loading todos:', error);
+            }
+        }
+
+        function updateToggleButton() {
+            if (showCompleted) {
+                toggleCompleted.classList.add('active');
+                toggleText.textContent = 'Hide Completed';
+            } else {
+                toggleCompleted.classList.remove('active');
+                toggleText.textContent = 'Show Completed';
+            }
+        }
+
+        function updateTaskCount() {
+            const total = allTodos.length;
+            const completed = allTodos.filter(todo => todo.completed).length;
+            const active = total - completed;
+
+            if (total === 0) {
+                taskCount.textContent = 'No tasks';
+            } else if (total === 1) {
+                taskCount.textContent = '1 task';
+            } else {
+                taskCount.textContent = `${total} tasks (${active} active, ${completed} completed)`;
             }
         }
 
@@ -390,20 +489,37 @@
         }
 
         function renderTodos(todos) {
-            if (todos.length === 0) {
-                todoList.innerHTML = `
-                    <li class="task-item">
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📝</div>
-                            <div class="empty-state-title">No tasks yet</div>
-                            <div class="empty-state-description">Add your first task above to get started!</div>
-                        </div>
-                    </li>
-                `;
+            // Filter todos based on showCompleted state
+            const filteredTodos = showCompleted ? todos : todos.filter(todo => !todo.completed);
+
+            if (filteredTodos.length === 0) {
+                if (todos.length === 0) {
+                    // No tasks at all
+                    todoList.innerHTML = `
+                        <li class="task-item">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📝</div>
+                                <div class="empty-state-title">No tasks yet</div>
+                                <div class="empty-state-description">Add your first task above to get started!</div>
+                            </div>
+                        </li>
+                    `;
+                } else {
+                    // All tasks are completed and hidden
+                    todoList.innerHTML = `
+                        <li class="task-item">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">✅</div>
+                                <div class="empty-state-title">All tasks completed!</div>
+                                <div class="empty-state-description">Great job! Click "Show Completed" to view them.</div>
+                            </div>
+                        </li>
+                    `;
+                }
                 return;
             }
 
-            todoList.innerHTML = todos.map(todo => `
+            todoList.innerHTML = filteredTodos.map(todo => `
                 <li class="task-item">
                     <div class="task-content">
                         <div class="checkbox ${todo.completed ? 'completed' : ''}"
